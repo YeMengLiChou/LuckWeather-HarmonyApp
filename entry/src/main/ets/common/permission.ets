@@ -45,11 +45,12 @@ export function requestPermission(permissions: Array<Permissions>, context: Cont
     return new Promise<RequestPermissionsResult>((resolve, reject) => {
         atManager.requestPermissionsFromUser(context, permissions)
             .then((data) => {
+                console.log('request permissions result', JSON.stringify(data));
                 let grantedStatus = data.authResults
                 let length = grantedStatus.length
                 let granted = true
                 for (let i = 0; i < length; i++) {
-                    if (grantedStatus[i] !== 0) {
+                    if (grantedStatus[i] === -1) {
                         granted = false
                         break
                     }
@@ -68,6 +69,8 @@ export function requestPermission(permissions: Array<Permissions>, context: Cont
 
 /**
  * 打开指定应用的设置页面，引导其开启权限
+ * @param {UIAbilityContext} context
+ * @param {string} bundleName 应用的包名
  * */
 export function openPermissionsInSystemSettings(context: common.UIAbilityContext, bundleName: string) {
     const wantInfo: Want = {
@@ -79,4 +82,28 @@ export function openPermissionsInSystemSettings(context: common.UIAbilityContext
         }
     }
     return context.startAbility(wantInfo)
+}
+
+/**
+ * 申请权限，当权限全部授予时，才执行 action 操作，否则调用 onPermissionReject
+ *
+ * */
+export function requirePermission(
+    permissions: Permissions[],
+    context: common.UIAbilityContext,
+    action: () => void,
+    onPermissionReject: () => void = () => {
+    },
+) {
+    requestPermission(permissions, context)
+        .then((res) => {
+            if (res.granted) {
+                action()
+            } else {
+                // 权限拒绝
+                if (onPermissionReject) {
+                    onPermissionReject!()
+                }
+            }
+        })
 }
