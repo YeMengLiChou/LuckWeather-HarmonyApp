@@ -11,15 +11,15 @@ import {
 
 /**
  * 通过经纬度查询当前城市信息
- * @param {string} lat 经度
- * @param {string} lon 纬度
+ * @param {string} lon 经度，十进制最多两位小数
+ * @param {string} lat 纬度，十进制最多两位小数
  * */
-export function fetchCityByLatitudeAndLongitude(lat: string, lon: string): Promise<LocationResult> {
+export function fetchCityByLatitudeAndLongitude(lon: number, lat: number): Promise<LocationResult> {
     return request<LocationParam, LocationResult>('https://geoapi.qweather.com/v2/city/lookup', {
         useBaseUrl: false,
         param: {
             key: API_KEY,
-            location: `${lat},${lon}`,
+            location: `${lon.toFixed(2)},${lat.toFixed(2)}`,
             range: 'cn',
             number: 20,
         }

@@ -1,11 +1,20 @@
 import { AbilityConstant, UIAbility, Want } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { promptAction, window } from '@kit.ArkUI';
-import { openPermissionsInSystemSettings, requestPermission } from '../common/permission';
-import { geoLocationManager } from '@kit.LocationKit'
+import { openPermissionsInSystemSettings, requirePermission } from '../common/permission';
+import { requestLocation } from '../common/location';
+import { createKvManager, getDeviceKVStore } from '../common/kvstore';
+import { BUNDLE_NAME, STORE_ID_WEATHER } from '../common/config';
+import distributedKVStore from '@ohos.data.distributedKVStore';
+import { JSON } from '@kit.ArkTS';
+import { fetchCityByLatitudeAndLongitude } from '../network/api';
+import { geoLocationManager } from '@kit.LocationKit';
 import { BusinessError } from '@kit.BasicServicesKit';
+import { KEY_CURRENT_CITY_INFO } from '../common/constants';
 
 export default class EntryAbility extends UIAbility {
+    private weatherStore: Optional<distributedKVStore.DeviceKVStore>
+
     onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
         hilog.info(0x0000, 'testTag', '%{public}s', 'Ability onCreate');
     }
@@ -14,7 +23,7 @@ export default class EntryAbility extends UIAbility {
         hilog.info(0x0000, 'testTag', '%{public}s', 'Ability onDestroy');
     }
 
-    onWindowStageCreate(windowStage: window.WindowStage): void {
+    async onWindowStageCreate(windowStage: window.WindowStage): Promise<void> {
         hilog.info(0x0000, 'testTag', '%{public}s', 'Ability onWindowStageCreate');
 
         windowStage.loadContent('pages/Index', (err) => {
@@ -26,64 +35,61 @@ export default class EntryAbility extends UIAbility {
             hilog.info(0x0000, 'testTag', 'Succeeded in loading the content.');
         });
 
-        // 申请定位权限
-        requestPermission([
-            'ohos.permission.LOCATION'
-        ], this.context)
-            .then((res) => {
-                // 权限未授予
-                if (!res.granted) {
-                    promptAction.showToast({
-                        message: '未授予定位权限，无法获取当前天气信息！'
-                    })
-                    openPermissionsInSystemSettings(this.context, 'cn.li.luck_weather')
-                } else {
-
-                    try {
-
-                    } catch (error) {
-
-                    }
-                }
+        // 检查定位权限是否申请
+        requirePermission(
+            ["ohos.permission.LOCATION", "ohos.permission.APPROXIMATELY_LOCATION"],
+            this.context,
+            () => {
+                this.requestLocation()
+            },
+            () => {
+                promptAction.showToast({
+                    message: '未授予定位权限，无法获取当前天气信息！',
+                    showMode: promptAction.ToastShowMode.TOP_MOST
+                })
+                openPermissionsInSystemSettings(this.context, 'cn.li.luck_weather')
             })
     }
 
 
-    private async requestLocation() {
-        let location: Optional<geoLocationManager.Location> = undefined
-        try {
-            location = geoLocationManager.getLastLocation()
-            // 如果大于5min，则使用实时的
-            if (new Date().getTime() - location.timeStamp >= 5 * 60 * 1000) {
-                const nowLocation = await this.requestAccuracyLocation()
-                if (nowLocation) {
-                    location = nowLocation
+    private requestLocation() {
+        requestLocation()
+            .then(res => {
+                if (res) {
+                    console.log('requested location info', JSON.stringify(res))
+                    this.fetchCurrentCityInfo(res)
                 }
-            }
-        } catch (error) {
-            const e = error as BusinessError
-            console.error(`requestLocation failed and try to use accuracy location! ${e.code} ${e.message}! `)
-            const nowLocation = await this.requestAccuracyLocation()
-            if (nowLocation) {
-                location = nowLocation
-            }
-        }
-        return location
+            })
+            .catch((err: BusinessError) => {
+                console.error('requestLocation failed', err.message)
+                promptAction.showToast({
+                    message: '定位信息获取失败！'
+                })
+            })
     }
 
-    private async requestAccuracyLocation() {
-        let request: geoLocationManager.SingleLocationRequest = {
-            locatingPriority: geoLocationManager.LocatingPriority.PRIORITY_LOCATING_SPEED,
-            locatingTimeoutMs: 5000
-        }
-        try {
-            return await geoLocationManager.getCurrentLocation(request)
-        } catch (error) {
-            const e = error as BusinessError
-            console.error(`requestAccuracyLocaion failed! ${e.code} ${e.message}`)
-        }
-        return undefined
+    /**
+     * 根据所给的定位信息获取到当前城市的信息，并存储到 KvStore 中
+     * */
+    private fetchCurrentCityInfo(locationInfo: geoLocationManager.Location) {
+        fetchCityByLatitudeAndLongitude(
+            locationInfo.longitude,
+            locationInfo.latitude
+        )
+            .then((res) => {
+                getDeviceKVStore(createKvManager(this.context, BUNDLE_NAME), STORE_ID_WEATHER,
+                    distributedKVStore.SecurityLevel.S3, {
+                        encrypt: true,
+                        createIfMissing: true,
+                        backup: true,
+                    })
+                    .then(store => {
+                        this.weatherStore = store
+                        store.put(KEY_CURRENT_CITY_INFO, JSON.stringify(res.location[0]))
+                    })
+            })
     }
+
 
     onWindowStageDestroy(): void {
         // Main window is destroyed, release UI related resources

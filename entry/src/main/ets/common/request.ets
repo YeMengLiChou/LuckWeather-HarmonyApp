@@ -1,4 +1,10 @@
-import axios, { AxiosHeaders, AxiosInstance, AxiosRequestConfig, AxiosResponse } from '@ohos/axios';
+import axios, {
+    AxiosHeaders,
+    AxiosInstance,
+    AxiosRequestConfig,
+    AxiosResponse,
+    InternalAxiosRequestConfig
+} from '@ohos/axios';
 import { BASE_URL } from './config';
 
 /**
@@ -43,12 +49,38 @@ export interface RequestOptions<T> {
     useBaseUrl?: boolean
 }
 
-const globalConfig: AxiosRequestConfig = {
+const config: AxiosRequestConfig = {
     baseURL: BASE_URL,
     timeout: 10_000,
 }
 
-const Axios = axios.create(globalConfig)
+const Axios = axios.create(config)
+
+Axios.interceptors.request.use(
+    (config: InternalAxiosRequestConfig) => {
+        console.info(`Axios request -> ${config.url} `
+            + "\n\t--> params: " + JSON.stringify(config.params)
+            + "\n\t--> data: " + JSON.stringify(config.data)
+        )
+        return config
+    },
+    (error: Error) => {
+        return Promise.reject(error)
+    }
+)
+
+Axios.interceptors.response.use(
+    (response: AxiosResponse) => {
+        console.info(`Axios response -> ${response.config.url} (${response.status})` +
+            "\n\t --> data: " + JSON.stringify(response.data)
+        )
+        return response
+    },
+    (error: Error) => {
+        return Promise.reject(error)
+    }
+
+)
 
 export function request<R, T>(url: string, options?: RequestOptions<R>) {
     if (!options) {
