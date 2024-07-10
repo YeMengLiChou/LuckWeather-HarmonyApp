@@ -1,5 +1,5 @@
 import { LocationBean } from '../model/LocationModel'
-import { fetchCityInfoByKeyWord } from '../network/api'
+import { fetchCityInfoByKeyWord,fetchRealWeather,fetchForecast7DayWeather } from '../network/api'
 import { Location, LocationResult } from '../network/type'
 import LocationList from '../viewmodel/LocaotionViewModel'
 import { CityManagerList } from '../viewmodel/CityManagerViewModel'
@@ -72,6 +72,7 @@ struct SearchLink {
   result?: LocationResult
   @State locations: Location[] = []
   @State isShow: boolean = false
+  @State dataList:CityMangerModel2[]=CityManagerList
   private searchDebounceId = -1
 
   build() {
@@ -106,9 +107,9 @@ struct SearchLink {
 
       //搜索结果列表
       Stack() {
-        CityManager()
+        CityManager({dataList:this.dataList})
         if (this.isShow) {
-          SearchResult({ locations: this.locations })
+          SearchResult({ locations: this.locations ,dataList:this.dataList})
         }
       }
 
@@ -124,8 +125,8 @@ struct SearchLink {
  * */
 @Component
 struct SearchResult {
-  @Prop locations: Location[]
-
+  @Link locations: Location[]
+  @Link dataList:CityMangerModel2[]
   build() {
     Column() {
       List() {
@@ -138,11 +139,28 @@ struct SearchResult {
                 Image($r('app.media.icon_add'))
                   .width(20)
                   .height(20)
+                  .onClick(()=>{
+                    fetchRealWeather(item.id).then(value1=>{
+                      fetchForecast7DayWeather(item.id).then(value2=>{
+                        this.dataList.push(
+                          {
+                            cityName:item.name,
+                            temp:value1.now.temp,
+                            text:value1.now.text,
+                            tempMin:value2.daily[0].tempMin,
+                            tempMax: value2.daily[0].tempMax
+                          }
+                        )
+                      })
+                    })
+                  })
               }
               .width('100%')
               .justifyContent(FlexAlign.SpaceBetween)
+
             }
             .searchCard()
+
           }
         )
       }
@@ -153,6 +171,8 @@ struct SearchResult {
     .backgroundColor(Color.White)
     .height('100%')
   }
+
+
 }
 
 /*
@@ -160,11 +180,12 @@ struct SearchResult {
  * */
 @Component
 struct CityManager {
+  @Link dataList:CityMangerModel2[]
   build() {
     Column() {
       List({ space: 20 }) {
         ForEach(
-          CityManagerList,
+          this.dataList,
           (item: CityMangerModel2, index: number) => {
             ListItem() {
               Row() {
@@ -186,7 +207,9 @@ struct CityManager {
               }
               .cityCard()
               .justifyContent(FlexAlign.SpaceBetween)
+
             }
+            .swipeAction({ end: this.deleteButton(index) })
           }
         )
       }
@@ -195,6 +218,23 @@ struct CityManager {
 
     }
     .margin({ top: 20 })
+  }
+
+  @Builder
+  deleteButton(index: number) {
+    Button() {
+      Image($r('app.media.icon_delete'))
+        .fillColor(Color.White)
+        .width(20)
+    }
+    .margin({left:10,right:10})
+    .width(40)
+    .height(40)
+    .type(ButtonType.Circle)
+    .backgroundColor(Color.Red)
+    .onClick(() => {
+      this.dataList.splice(index, 1)
+    })
   }
 }
 
@@ -230,3 +270,6 @@ function cityCard() {
     offsetY: 4
   })
 }
+
+
+
