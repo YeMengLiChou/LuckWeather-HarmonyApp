@@ -1,21 +1,81 @@
 import { IconButton } from '../components/IconButton'
-import { fetchForecast7DayWeather, fetchRealWeather } from '../network/api'
-import { CityWeather } from './CityWeather'
+import { CityModel } from '../model/CityModel'
+import { CityWeather } from './CityWeather/CityWeather'
+import { distributedKVStore } from '@kit.ArkData'
+import { getWeatherKvStore } from '../utils/WeatherKvStore'
+import { KEY_CITIES_INFO } from '../common/constants'
+import { BusinessError } from '@kit.BasicServicesKit'
+
+
+@Builder
+export function IndexBuilder() {
+    Index()
+}
 
 @Entry
 @Component
 struct Index {
     @Provide pageStack: NavPathStack = new NavPathStack()
-    @State currentIndex: number = 0
+    private weatherKvStore?: distributedKVStore.DeviceKVStore
+    @State
+    private citiesInfo: Array<CityModel> = []
 
+    /**
+     * 从本地数据库加载城市信息
+     * */
+    private loadCitiesInfoFromKvStore() {
+        this.weatherKvStore!.get(KEY_CITIES_INFO)
+            .then((res) => {
+                const citiesInfo = JSON.parse(res as string) as CityModel[]
+                // 将定位城市排到第一位
+                citiesInfo.sort((a, b) => {
+                    if (a.isLocationCity) {
+                        return -1
+                    }
+                    if (b.isLocationCity) {
+                        return 1
+                    }
+                    return 0
+                })
+                this.citiesInfo.push(...citiesInfo)
+            })
+            .catch((error: BusinessError) => {
+                console.error('getWeatherKvStore failed!', JSON.stringify(error))
+            })
+
+        // 监听数据是否发生变化
+        this.weatherKvStore!.on('dataChange', distributedKVStore.SubscribeType.SUBSCRIBE_TYPE_ALL, (data) => {
+            const updated = data.updateEntries.find((item) => {
+                return item.key === KEY_CITIES_INFO
+            });
+            if (updated) {
+                this.citiesInfo = JSON.parse(updated.value.value as string)
+            }
+        })
+    }
+
+    aboutToAppear(): void {
+        getWeatherKvStore(getContext(this))
+            .then((store) => {
+                this.weatherKvStore = store
+                this.loadCitiesInfoFromKvStore()
+            })
+            .catch((error: Error) => {
+                console.error('getWeatherKvStore failed!', JSON.stringify(error))
+            })
+    }
+
+    aboutToDisappear(): void {
+        this.weatherKvStore?.off('dataChange')
+    }
 
     @Builder
     tabBuilder(index: number, name: string) {
         Column() {
             Text(name)
                 .fontSize(16)
-                .fontColor(this.currentIndex === index ? '#007DFF' : '#182431')
-                .fontWeight(this.currentIndex === index ? 500 : 400)
+                .fontColor($r('sys.color.font_primary'))
+                .fontWeight(500)
                 .id(index.toString())
         }.width('100%')
     }
@@ -47,13 +107,16 @@ struct Index {
                 Tabs({
                     barPosition: BarPosition.Start,
                 }) {
-                    TabContent() {
-                        CityWeather({
-                            cityWeatherOptions: {
-                                location: '123'
-                            }
-                        })
-                    }
+                    ForEach(this.citiesInfo, (item: CityModel, index: number) => {
+                        TabContent() {
+                            CityWeather({
+                                options: {
+                                    location: item.locationID
+                                }
+                            })
+                        }
+                        .tabBar(this.tabBuilder(index, `${item.provinceName} · ${item.cityName}`))
+                    })
                 }
                 .barWidth('70%')
                 .barMode(BarMode.Scrollable)

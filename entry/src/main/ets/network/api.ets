@@ -5,7 +5,9 @@ import {
     ForecastWeatherHourResult,
     LocationParam,
     LocationResult,
+    NowAirResult,
     RealWeatherResult,
+    WeatherIndexResult,
     WeatherParam
 } from './type'
 
@@ -42,6 +44,20 @@ export function fetchRealWeather(
 }
 
 /**
+ * 获取未来3天天气预报
+ * */
+export function fetchForecast3DayWeather(
+    location: string
+): Promise<ForecastWeatherDayResult> {
+    return request<WeatherParam, ForecastWeatherDayResult>('/v7/weather/3d', {
+        param: {
+            key: API_KEY,
+            location: location
+        }
+    })
+}
+
+/**
  * 获取未来7天天气预报
  * */
 export function fetchForecast7DayWeather(
@@ -68,4 +84,33 @@ export function fetchForecast24HourWeather(
             location: location
         }
     })
+}
+
+/**
+ * 获取空气质量数据
+ * */
+export function fetchNowAir(
+    location: string,
+): Promise<NowAirResult> {
+    return request<WeatherParam, NowAirResult>('/v7/air/now', {
+        param: {
+            key: API_KEY,
+            location: location
+        }
+    })
+}
+
+/**
+ * 获取天气指数
+ * */
+export function fetchWeatherIndices(
+    location: string,
+): Promise<WeatherIndexResult> {
+    return request<WeatherParam, WeatherIndexResult>('/v7/indices/1d', {
+        param: {
+            key: API_KEY,
+            location: location
+        }
+    })
+
 }

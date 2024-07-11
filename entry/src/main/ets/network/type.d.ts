@@ -129,7 +129,7 @@ export interface RealWeatherResult {
 
 export interface DailyWeatherResult {
     /** 预测日期 */
-    fxDate: Date;
+    fxDate: string;
 
     /** 日出时间，高纬度地区可能为空 */
     sunrise?: string;
@@ -243,4 +243,127 @@ export interface HourlyWeatherResult {
     pressure: string;
     cloud: string;
     dew: string;
+}
+
+/**
+ * 实时空气质量数据
+ * */
+export interface NowAirResult {
+    code: string;
+    updateTime: string;
+    fxLink: string;
+    now: NowAirData;
+    station: NowAirData[];
+    refer: Refer;
+}
+
+export interface NowAirData {
+    /** 数据发布时间 */
+    pubTime: string;
+
+    /** 空气质量指数 */
+    aqi: string;
+
+    /** 空气质量指数等级 */
+    level: string;
+
+    /** 空气质量指数级别 */
+    category: string;
+
+    /** 空气质量的主要污染物，当为优时，返回值为NA */
+    primary: string;
+
+    /** PM10 */
+    pm10: string;
+
+    /** PM2.5 */
+    pm2p5: string;
+
+    /** 二氧化氮 */
+    no2: string;
+
+    /** 二氧化硫 */
+    so2: string;
+
+    /** 一氧化氮 */
+    co: string;
+
+    /** 臭氧 */
+    o3: string;
+
+    /** 检测站名称  */
+    name?: string;
+
+    /** 监测站id */
+    id?: string;
+}
+
+
+export interface WeatherIndexDailyData {
+
+    /** 预报日期 */
+    date: Date,
+
+    /** 生活指数类型ID */
+    type: string,
+
+    /** 生活指数类型的名臣 */
+    name: string,
+
+    /** 生活指数预报等级 */
+    level: string,
+
+    /** 生活指数预报级别的名称 */
+    category: string,
+
+    /** 生活指数预报的详细描述 */
+    text?: string,
+    allergy
+
+}
+
+export interface WeatherIndexResult {
+    code: string,
+    updateTime: Date,
+    fxLink: string,
+    daily: WeatherIndexDailyData[],
+    refer: Refer
+}
+
+export enum WeatherIndex {
+    /** 全部指数 */
+    All = 0,
+    /** 运动指数 */
+    Sport = 1,
+    /** 洗车指数 */
+    WashCar = 2,
+    /** 穿衣指数 */
+    Wear = 3,
+    /** 钓鱼指数 */
+    Fishing = 4,
+    /** 紫外线指数 */
+    Ultraviolet = 5,
+    /** 旅游指数 */
+    Travel = 6,
+    /** 花粉过敏指数 */
+    PollenAllergy = 7,
+    /** 舒适度指数 */
+    Comfort = 8,
+    /** 感冒指数 */
+    Cold = 9,
+    /** 空气污染扩散条件指数 */
+    AirPollution = 10,
+    /** 空调开启指数 */
+    AirConditioner = 11,
+    /** 太阳镜指数 */
+    Sunglasses = 12,
+    /** 化妆指数 */
+    MakUp = 13,
+    /** 晾晒指数 */
+    Drying = 14,
+    /** 交通指数 */
+    transport = 15,
+    /** 防晒指数  */
+    Sunscreen = 16
+
 }
