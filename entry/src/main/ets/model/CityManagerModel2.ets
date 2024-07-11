@@ -13,12 +13,15 @@ export interface Options {
 }
 
 export interface WeatherData {
-  temp: string,
-  text: string,
-  locationID: string,
+  cityName:string, //城市名
+  temp:string //当前温度
+  text:string //天气情况描述
+  tempMin:string //当天最低温度
+  tempMax:string //当天最高温度
+  locationID:string //城市ID
 }
 
-export interface  VO {
+export interface  CityWeatherVO {
   city: CityModel,
   data: WeatherData
 }
