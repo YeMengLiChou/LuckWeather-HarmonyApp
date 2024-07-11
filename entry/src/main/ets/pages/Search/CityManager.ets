@@ -2,6 +2,7 @@ import { CityMangerModel2, CityWeatherVO } from '../../model/CityManagerModel2'
 import { CityModel } from '../../model/CityModel'
 import { distributedKVStore } from '@kit.ArkData'
 import { deleteCityRelatedData, getWeatherKvStore, updateCitiesInfo } from '../../utils/WeatherKvStore'
+import { MaxAndMinTemperature } from '../../components/MaxAndMinTemperature'
 
 
 /*
@@ -9,10 +10,16 @@ import { deleteCityRelatedData, getWeatherKvStore, updateCitiesInfo } from '../.
  * */
 @Component
 export struct CityManager {
+    @Consume pathStack: NavPathStack
     @Link dataList: CityMangerModel2[]
     @Link trueDataList: CityWeatherVO[]
     @Link citiesInfo: CityModel[]
     weatherKvStore?: distributedKVStore.DeviceKVStore
+
+    private navigateToSpecifiedIndex(locationID: string) {
+        // TODO: navigate to main page
+        this.pathStack.popToName("main", locationID, true)
+    }
 
     private deleteCity(locationID: string) {
         const index = this.citiesInfo.findIndex((item) => {
@@ -63,13 +70,23 @@ export struct CityManager {
                                         .fontColor(Color.White)
                                         .fontSize(22)
                                         .margin({ bottom: 5 })
-                                    Text(`${item.data.text}  ${item.data.tempMin}° / ${item.data.tempMax}°`)
-                                        .fontColor(Color.White)
+
+                                    Row({ space: 8 }) {
+                                        Text(`${item.data.text}`)
+                                            .fontColor(Color.White)
+                                        MaxAndMinTemperature({
+                                            options: {
+                                                tempMax: item.data.tempMax,
+                                                tempMin: item.data.tempMin,
+                                                textColor: Color.White
+                                            }
+                                        })
+                                    }
                                 }
                                 .alignItems(HorizontalAlign.Start)
 
                                 Column() {
-                                    Text(item.data.temp + '℃')
+                                    Text(item.data.temp + '°')
                                         .foregroundColor(Color.White)
                                         .fontSize(30)
                                 }
@@ -79,7 +96,7 @@ export struct CityManager {
                         }
                         .swipeAction({ end: this.deleteButton(item.city.locationID) })
                         .onClick(() => {
-                            // TODO: navigate to main page
+                            this.navigateToSpecifiedIndex(item.city.locationID)
                         })
                     }
                 )

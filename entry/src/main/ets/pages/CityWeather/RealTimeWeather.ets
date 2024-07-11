@@ -3,6 +3,7 @@ import { RealWeatherResult } from '../../network/type';
 import { LengthMetrics } from '@kit.ArkUI';
 import { LengthUnit } from '@ohos.arkui.node';
 import { COMPONENT_BACKGROUND_COLOR } from '../../common/constants';
+import { SunRiseAndSet } from '../../components/SunRiseAndSet';
 
 
 export interface RealTimeWeatherOptions {
@@ -73,16 +74,16 @@ struct WindInfoComponent {
             Column({ space: 12 }) {
                 Text(this.windDir)
                     .fontColor(textColor)
-                    .fontSize(14)
+                    .fontSize(16)
                     .margin({ bottom: 2 })
 
                 Text(this.windScale + '级')
-                    .fontSize(14)
+                    .fontSize(16)
                     .fontColor(textColor)
             }
             .width("40%")
-            .alignItems(HorizontalAlign.Start)
-            .padding({ left: 8 })
+            .alignItems(HorizontalAlign.Center)
+            .padding({ left: 16 })
 
             Compass({
                 options: {
@@ -114,30 +115,38 @@ struct SunTimeInfo {
                 Row({ space: 2 }) {
                     Text(this.sunrise)
                         .fontColor(textColor)
-                        .fontSize(14)
+                        .fontSize(16)
                     Text("日出")
                         .fontColor(textColor)
                         .opacity(0.8)
-                        .fontSize(12)
+                        .fontSize(14)
                 }
 
                 Row({ space: 2 }) {
-                    Text(this.sunrise)
+                    Text(this.sunset)
                         .fontColor(textColor)
-                        .fontSize(14)
+                        .fontSize(16)
                     Text("日落")
                         .fontColor(textColor)
                         .opacity(0.8)
-                        .fontSize(12)
+                        .fontSize(14)
                 }
             }
             .width('50%')
             .height('100%')
             .justifyContent(FlexAlign.Center)
+
+            SunRiseAndSet({
+                options: {
+                    sunrise: this.sunrise,
+                    sunset: this.sunset
+                }
+            })
+                .width('50%')
+                .height('100%')
+                .offset({ top: -8 })
         }
         .padding({
-            top: 16,
-            bottom: 16,
             left: 8,
             right: 8
         })
@@ -164,17 +173,17 @@ struct OtherWeatherInfoComponent {
                     ["紫外线", this.uvIndex],
                     ["气压", `${this.presssure}hPa`]
                 ],
-                    (item: Array<string>, index: number) => {
+                    (item: Array<string>) => {
                         ListItem() {
                             Row() {
                                 Text(item[0])
                                     .fontColor(textColor)
                                     .opacity(0.8)
-                                    .fontSize(14)
+                                    .fontSize(16)
                                 Text(item[1])
                                     .fontColor(textColor)
                                     .opacity(1)
-                                    .fontSize(16)
+                                    .fontSize(18)
                             }
                             .height('25%')
                             .width("100%")

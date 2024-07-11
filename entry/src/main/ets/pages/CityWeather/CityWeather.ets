@@ -14,7 +14,7 @@ import { RealTemperature } from './RealTemperature'
 import { KVStoreCachedModel } from '../../model/KVStoreCachedModel'
 import { Fetch3dayWeather } from './Fetch3dayWeather'
 import { DayTrendPageNavParam } from '../DayTrend/DayTrendPage'
-import { Forecast24HourWetherComponent } from './Forecast24HourWeather'
+import { Forecast24HourWetherComponent } from './Forecast24Hour/Forecast24HourWeather'
 import { RealTimeWeather } from './RealTimeWeather'
 
 export interface CityWeatherOptions {
@@ -328,7 +328,7 @@ export struct CityWeather {
         Refresh({ refreshing: $$this.refreshing, promptText: '刷新中' }) {
             Scroll() {
 
-                Column() {
+                Column({space: 24}) {
                     if (this.realTemperatureVOData) {
                         Column({ space: 24 }) {
                             RealTemperature({
@@ -362,6 +362,7 @@ export struct CityWeather {
                             Forecast24HourWetherComponent({
                                 dataList: this.forecastHourWeatherData?.hourly
                             })
+                                .height(300)
 
                             RealTimeWeather({
                                 options: {

@@ -28,8 +28,9 @@ export struct Compass {
     options?: CompassOptions
     private settings: RenderingContextSettings = new RenderingContextSettings(true)
     private context: CanvasRenderingContext2D = new CanvasRenderingContext2D(this.settings)
-    private readonly compassBorderColor: string = "#000"
-    private readonly textSize: string = "8vp"
+    private readonly compassBorderColor: string = "#A0000000"
+    private readonly compassBorderWidth: number = 1.2
+    private readonly textSize: string = "10vp"
     private readonly compassPointerColor = "#000"
 
     private drawCompass() {
@@ -42,7 +43,7 @@ export struct Compass {
 
         this.context.strokeStyle = this.options?.borderColor ?? this.compassBorderColor
         this.context.fillStyle = this.options?.borderColor ?? this.compassBorderColor
-        this.context.lineWidth = 1.5
+        this.context.lineWidth = this.compassBorderWidth
         this.context.beginPath()
         this.context.arc(centerX, centerY, radius, 0, 360)
         this.context.stroke()
@@ -56,6 +57,11 @@ export struct Compass {
         const northPointX = centerX - textMeasure.width / 2
         const northPointY = centerY - radius + textMeasure.height
         this.context.fillText('北', northPointX, northPointY)
+
+        this.context.beginPath()
+        this.context.moveTo(centerX, centerY - radius)
+        this.context.lineTo(centerX, centerY - radius + 4)
+        this.context.stroke()
 
         // 南的位置
         const southPointX = centerX - textMeasure.width / 2

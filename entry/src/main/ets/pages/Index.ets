@@ -37,6 +37,7 @@ struct Index {
                 console.error(`loadWeatherData failed: (${err.code})`, error.message)
             })
     }
+
     /**
      * 从数据库中加载天气数据
      * */
@@ -92,7 +93,7 @@ struct Index {
                 return item.key === KEY_CITIES_INFO;
             })
             if (inserted) {
-                this.citiesInfo = JSON.parse(inserted.value.value as string)  as CityModel[]
+                this.citiesInfo = JSON.parse(inserted.value.value as string) as CityModel[]
                 return
             }
             // 其他使用更新的数据
@@ -130,6 +131,7 @@ struct Index {
                 .id(index.toString())
         }.width('100%')
     }
+
 
     build() {
         Navigation(this.pageStack) {
@@ -183,6 +185,13 @@ struct Index {
         .hideTitleBar(true)
         .height('100%')
         .width('100%')
+        .onAppear(() => {
+            console.log('index page show')
+            // TODO: 获取要跳转的位置
+        })
+        .onDisAppear(() => {
+            console.log('index page hided')
+        })
     }
 }
 

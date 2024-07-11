@@ -40,7 +40,6 @@ function formatTimestamp(time: number) {
 }
 
 
-
 @Extend(Text)
 function smallText() {
     .font({
@@ -55,9 +54,9 @@ function smallText() {
 @Component
 export struct DayTrendItem {
     @Prop
-    private options: DayTrendItemOptions
+    options: DayTrendItemOptions
     @State
-    private isToday: boolean = false
+    isToday: boolean = false
     private readonly canvasPaddingHeight = 20
     private readonly canvasTopRatio = 0.15
     private readonly canvasBottomRatio = 0.15
@@ -374,7 +373,7 @@ export struct DayTrendItem {
                         .size({ width: 14, height: 14 })
                         .fillColor(Color.Gray)
                         .margin({ top: 4 })
-                        .offset({top: -2})
+                        .offset({ top: -2 })
                     Text(this.options.data.moonPhase)
                         .fontSize(14)
                         .fontWeight(300)

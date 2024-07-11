@@ -1,4 +1,5 @@
 import { Chip } from '@kit.ArkUI'
+import { MaxAndMinTemperature } from '../../components/MaxAndMinTemperature'
 
 export interface RealTemperatureOptions {
     /** 当前温度 */
@@ -57,7 +58,12 @@ export struct RealTemperature {
                 // 描述文本
                 Text(this.options!.weatherText)
                 // 最高温度/最低温度
-                Text(`${this.options!.highTemp}° / ${this.options!.lowTemp}°`)
+                MaxAndMinTemperature({
+                    options: {
+                        tempMax: this.options!.highTemp,
+                        tempMin: this.options!.lowTemp
+                    }
+                })
             }
             .id('row_bottom')
             .alignRules({
@@ -69,25 +75,25 @@ export struct RealTemperature {
                 Chip({
                     label: {
                         text: `空气 ${this.options!.airQualityDesc} ${this.options!.airQualityIndex}`,
-                        fontSize: 12,
+                        fontSize: 14,
 
                     },
                     allowClose: false,
                     prefixIcon: {
                         src: $r('app.media.icon_leaves'),
-                        size: { width: 16, height: 16 }
+                        size: { width: 20, height: 20 }
                     }
                 })
 
                 Chip({
                     label: {
-                        text: `降雨量 ${this.options!.rain}`,
-                        fontSize: 12,
+                        text: this.options!.rain === 0 ? '暂无降水' : `降雨量 ${this.options!.rain}mm`,
+                        fontSize: 14,
                     },
                     allowClose: false,
                     prefixIcon: {
-                        src: $r('app.media.icon_water'),
-                        size: { width: 16, height: 16 }
+                        src: $r('app.media.icon_rainy'),
+                        size: { width: 20, height: 20 }
                     }
                 })
             }

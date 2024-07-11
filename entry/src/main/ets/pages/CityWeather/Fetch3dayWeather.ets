@@ -82,7 +82,6 @@ struct DaysWeather {
                                     options: {
                                         tempMax: parseInt(item.tempMax),
                                         tempMin: parseInt(item.tempMin),
-                                        // textColor:
                                     }
                                 })
                             }
