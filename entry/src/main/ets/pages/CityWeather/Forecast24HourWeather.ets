@@ -19,7 +19,7 @@ export struct Forecast24HourWetherComponent {
             .alignItems(HorizontalAlign.Center)
         }
         .backgroundColor(Color.White)
-        .height('100%')
+        .height('auto')
         .width('100%')
         .margin({ top: 10 })
 

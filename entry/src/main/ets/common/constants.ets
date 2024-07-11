@@ -46,6 +46,7 @@ export function getForecastWeatherHourDataKey(location: string) {
     return KEY_FORECAST_WEATHER_HOUR_PREFIX + location
 }
 
+export const COMPONENT_BACKGROUND_COLOR = "#f0f0f0f0"
 
 
 

@@ -17,28 +17,25 @@ export struct Fetch3dayWeather {
 
     build() {
         Column() {
-            Column() {
+            Column({ space: 8 }) {
                 DaysWeather({ dataList: this.options!.dataList })
                 //点击按钮进入详细查看7天天气
                 Button("查看近7日天气")
-                    .width("100%")// .backgroundColor("#50FFFFFF")
-                    .margin({ top: 12 })
-                    .padding({ top: 12, bottom: 12 })
+                    .width("100%")
                     .fontColor('#fff')
                     .onClick(() => {
                         this.options!.onNavigate()
                     })
             }
             .padding({
-                top: 10,
+                top: 16,
                 left: 12,
                 right: 12,
-                bottom: 12
+                bottom: 16
             })
-            .borderRadius(20)
-            .width('90%')
-            // .backgroundColor('#300066cc')
-            .backgroundColor(Color.Transparent)
+            .borderRadius(16)
+            .backgroundColor("#f3f3f3")
+            .backdropBlur(10)
         }
         .width('100%')
     }
@@ -73,10 +70,12 @@ struct DaysWeather {
                                     .width('30%')
 
                                 Text("优")
-                                    .padding(4)
+                                    .padding(6)
+                                    .font({ size: 14, weight: 300 })
                                     .fontColor(this.textColor)
-                                    .borderRadius(5)
-                                    .backgroundColor("#30FFFFFF")
+                                    .borderRadius(8)
+                                    .backgroundColor(Color.White)
+                                    .backgroundBlurStyle(BlurStyle.Thin)
 
 
                                 MaxAndMinTemperature({

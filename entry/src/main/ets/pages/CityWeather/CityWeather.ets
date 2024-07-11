@@ -15,6 +15,7 @@ import { KVStoreCachedModel } from '../../model/KVStoreCachedModel'
 import { Fetch3dayWeather } from './Fetch3dayWeather'
 import { DayTrendPageNavParam } from '../DayTrend/DayTrendPage'
 import { Forecast24HourWetherComponent } from './Forecast24HourWeather'
+import { RealTimeWeather } from './RealTimeWeather'
 
 export interface CityWeatherOptions {
     location: string,
@@ -326,36 +327,57 @@ export struct CityWeather {
     build() {
         Refresh({ refreshing: $$this.refreshing, promptText: '刷新中' }) {
             Scroll() {
-                if (this.realTemperatureVOData) {
-                    Column() {
-                        RealTemperature({
-                            options: {
-                                curTemp: this.realTemperatureVOData!.curTemp,
-                                weatherText: this.realTemperatureVOData!.weatherDesc,
-                                highTemp: this.realTemperatureVOData!.highestTemp,
-                                lowTemp: this.realTemperatureVOData!.lowestTemp,
-                                rain: this.realTemperatureVOData!.rain,
-                                airQualityIndex: this.realTemperatureVOData!.airQualityIndex,
-                                airQualityDesc: this.realTemperatureVOData!.airQualityDesc,
-                            }
-                        })
-                            .margin({ top: 40, bottom: 40 })
 
-                        Fetch3dayWeather({
-                            options: {
-                                dataList: this.forecastDayWeatherData!.daily,
-                                onNavigate: () => {
-                                    this.navigateToTrendPage()
+                Column() {
+                    if (this.realTemperatureVOData) {
+                        Column({ space: 24 }) {
+                            RealTemperature({
+                                options: {
+                                    curTemp: this.realTemperatureVOData!.curTemp,
+                                    weatherText: this.realTemperatureVOData!.weatherDesc,
+                                    highTemp: this.realTemperatureVOData!.highestTemp,
+                                    lowTemp: this.realTemperatureVOData!.lowestTemp,
+                                    rain: this.realTemperatureVOData!.rain,
+                                    airQualityIndex: this.realTemperatureVOData!.airQualityIndex,
+                                    airQualityDesc: this.realTemperatureVOData!.airQualityDesc,
                                 }
-                            }
-                        })
+                            })
 
-                        Forecast24HourWetherComponent({
-                            dataList: this.forecastHourWeatherData?.hourly
-                        })
+                            Fetch3dayWeather({
+                                options: {
+                                    dataList: this.forecastDayWeatherData!.daily,
+                                    onNavigate: () => {
+                                        this.navigateToTrendPage()
+                                    }
+                                }
+                            })
+                        }
+                        .alignItems(HorizontalAlign.Center)
+                        .justifyContent(FlexAlign.SpaceBetween) // 保证分开两部分
+                        .width('100%')
+                        .height('100%')
+
+
+                        Column({ space: 24 }) {
+                            Forecast24HourWetherComponent({
+                                dataList: this.forecastHourWeatherData?.hourly
+                            })
+
+                            RealTimeWeather({
+                                options: {
+                                    sunset: this.forecastDayWeatherData!.daily[0].sunset ?? '',
+                                    sunrise: this.forecastDayWeatherData!.daily[0].sunrise ?? '',
+                                    moonrise: this.forecastDayWeatherData!.daily[0].moonrise ?? '',
+                                    moonset: this.forecastDayWeatherData!.daily[0].moonset ?? '',
+                                    uvIndex: this.forecastDayWeatherData!.daily[0].uvIndex,
+                                    realData: this.realWeatherData!
+                                }
+                            })
+                        }
                     }
-                    .width('100%')
                 }
+                .width("100%")
+                .padding({left: 16, right: 16})
             }
             .height('100%')
             .width('100%')

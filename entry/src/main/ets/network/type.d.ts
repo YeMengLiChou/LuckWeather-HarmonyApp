@@ -87,7 +87,7 @@ export interface RealWeatherResult {
     /**
      * 最近更新时间
      * */
-    updateTime: Date,
+    updateTime: string,
 
     /** 当前数据的响应式页面 */
     fxLink: string,
