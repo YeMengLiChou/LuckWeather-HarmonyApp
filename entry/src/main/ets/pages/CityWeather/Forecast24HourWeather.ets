@@ -1,10 +1,9 @@
-import { ForecastWeatherHourResult } from '../network/type'
-import { Forecast24HourWeatherViewModel } from '../viewmodel/Forecast24HourWeatherViewModel'
-import { HourlyWeatherResult } from '../network/type'
+import { Forecast24HourWeatherViewModel } from '../../viewmodel/Forecast24HourWeatherViewModel'
+import { HourlyWeatherResult } from '../../network/type'
 
 
 @Component
-struct Forecast24HourWetherComponent {
+export struct Forecast24HourWetherComponent {
     @State @Require dataList: HourlyWeatherResult[] = Forecast24HourWeatherViewModel.hourly
 
     build() {

@@ -12,6 +12,9 @@ import { getWeatherKvStore } from '../../utils/WeatherKvStore'
 import * as constants from '../../common/constants'
 import { RealTemperature } from './RealTemperature'
 import { KVStoreCachedModel } from '../../model/KVStoreCachedModel'
+import { Fetch3dayWeather } from './Fetch3dayWeather'
+import { DayTrendPageNavParam } from '../DayTrend/DayTrendPage'
+import { Forecast24HourWetherComponent } from './Forecast24HourWeather'
 
 export interface CityWeatherOptions {
     location: string,
@@ -300,6 +303,16 @@ export struct CityWeather {
             })
     }
 
+    private navigateToTrendPage() {
+        const data: DayTrendPageNavParam = {
+            shouldShowNavigation: false,
+            locationID: this.options.location,
+            cityName: '',
+            data: this.forecastDayWeatherData!
+        }
+        this.pathStack.pushPathByName("day_trend", data, true)
+    }
+
     aboutToAppear(): void {
         this.refreshing = true
         // 获取本地数据库
@@ -328,14 +341,20 @@ export struct CityWeather {
                         })
                             .margin({ top: 40, bottom: 40 })
 
-                        Button('天气趋势')
-                            .onClick(() => {
-                                this.pathStack.pushPathByName("day_trend", this.forecastDayWeatherData, true)
-                            })
+                        Fetch3dayWeather({
+                            options: {
+                                dataList: this.forecastDayWeatherData!.daily,
+                                onNavigate: () => {
+                                    this.navigateToTrendPage()
+                                }
+                            }
+                        })
+
+                        Forecast24HourWetherComponent({
+                            dataList: this.forecastHourWeatherData?.hourly
+                        })
                     }
                     .width('100%')
-                    .height('100%')
-
                 }
             }
             .height('100%')

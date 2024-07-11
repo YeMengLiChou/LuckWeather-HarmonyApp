@@ -1,3 +1,4 @@
+import { getWeekendText } from '../../utils/TimeUtils'
 import { WeatherTrendVO } from './DayTrendPage'
 
 /** DayTrendItem 选项设置 */
@@ -38,36 +39,6 @@ function formatTimestamp(time: number) {
     return `${date.getMonth() + 1}月${date.getDate()}日`
 }
 
-/**
- * 获取周x文本
- * */
-function getWeekendText(time: number) {
-    const date = new Date(time)
-    const now = new Date()
-    if (date.getDate() == now.getDate()) {
-        return '今天'
-    } else if (date.getDate() == now.getDate() + 1) {
-        return '明天'
-    }
-    const day = date.getDay()
-    switch (day) {
-        case 0:
-            return '周日';
-        case 1:
-            return '周一';
-        case 2:
-            return '周二';
-        case 3:
-            return '周三';
-        case 4:
-            return '周四';
-        case 5:
-            return '周五';
-        case 6:
-            return '周六';
-    }
-    return ''
-}
 
 
 @Extend(Text)
