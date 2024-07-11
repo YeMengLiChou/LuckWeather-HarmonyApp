@@ -53,7 +53,6 @@
       {
         // 网络请求,
         "name": 'ohos.permission.INTERNET',
-
       },
       {
         // 精确定位

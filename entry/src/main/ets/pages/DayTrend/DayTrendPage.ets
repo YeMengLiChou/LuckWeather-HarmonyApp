@@ -1,3 +1,4 @@
+import { IconButton } from '../../components/IconButton'
 import { ForecastWeatherDayResult } from '../../network/type'
 import { DayTrend } from './DayTrend'
 
@@ -58,29 +59,61 @@ export function DayTrendPageBuilder() {
     DayTrendPage()
 }
 
+export interface DayTrendPageNavParam {
+    locationID: string,
+    shouldShowNavigation: boolean,
+    cityName: string,
+    data: ForecastWeatherDayResult,
+}
+
 @Component
 @Entry
 struct DayTrendPage {
-    pageStack: NavPathStack = new NavPathStack()
+    @Provide({ allowOverride: 'pathStack' })
+    private pageStack: NavPathStack = new NavPathStack()
     @State
     private data: Array<WeatherTrendVO> = []
+    @State
+    private param: Optional<DayTrendPageNavParam> = undefined
 
     /** 从 NavPathStack 获取展示数据 */
     private getParamFromPathStack() {
-        const params: ForecastWeatherDayResult =
-            this.pageStack.getParamByName("day_trend")[0] as ForecastWeatherDayResult
-        this.data = transformWeatherTrendVO(params)
+        this.param = this.pageStack.getParamByName("day_trend")[0] as DayTrendPageNavParam
+        this.data = transformWeatherTrendVO(this.param.data)
     }
 
     build() {
         NavDestination() {
             Column() {
-                Text('7天趋势预报')
-                    .font({
-                        size: 30
-                    })
-                    .width('100%')
-                    .padding(20)
+                Row() {
+                    Text(`${this.param?.cityName ?? ''}7天趋势预报`)
+                        .font({
+                            size: 30
+                        })
+                        .width('100%')
+                        .padding(20)
+
+                    if (this.param?.shouldShowNavigation) {
+                        Row() {
+                            Text("去主页查看")
+                            IconButton({
+                                options: {
+                                    iconRes: $r('app.media.icon_right_arrow'),
+                                    buttonSize: { height: 48, width: 48 },
+                                    iconSize: { height: 36, width: 36 },
+                                    buttonColor: '#e0e0e0',
+                                }
+                            })
+                        }
+                        .alignItems(VerticalAlign.Center)
+                        .onClick(() => {
+
+                        })
+                    }
+                }
+                .width('100%')
+                .justifyContent(FlexAlign.SpaceBetween)
+                .alignItems(VerticalAlign.Center)
 
                 DayTrend({
                     options: {
@@ -88,7 +121,6 @@ struct DayTrendPage {
                     }
                 })
             }
-
         }
         .height('100%')
         .width('100%')

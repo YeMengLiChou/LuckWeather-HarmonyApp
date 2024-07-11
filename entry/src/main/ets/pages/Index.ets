@@ -5,7 +5,11 @@ import { distributedKVStore } from '@kit.ArkData'
 import { getWeatherKvStore } from '../utils/WeatherKvStore'
 import { KEY_CITIES_INFO } from '../common/constants'
 import { BusinessError } from '@kit.BasicServicesKit'
-
+import * as constants from '../common/constants'
+import { SearchPageWeatherData } from './Search/SearchPage'
+import { KVStoreCachedModel } from '../model/KVStoreCachedModel'
+import { ForecastWeatherDayResult, RealWeatherResult } from '../network/type'
+import { JSON } from '@kit.ArkTS'
 
 @Builder
 export function IndexBuilder() {
@@ -19,6 +23,44 @@ struct Index {
     private weatherKvStore?: distributedKVStore.DeviceKVStore
     @State
     private citiesInfo: Array<CityModel> = []
+
+    /**
+     * 跳转到搜索页面
+     * */
+    private navigateToSearchPage() {
+        this.loadWeatherData()
+            .then((res: Array<SearchPageWeatherData>) => {
+                this.pageStack.pushDestinationByName("search", res)
+            })
+            .catch((error: Error) => {
+                const err = error as BusinessError
+                console.error(`loadWeatherData failed: (${err.code})`, error.message)
+            })
+    }
+    /**
+     * 从数据库中加载天气数据
+     * */
+    private async loadWeatherData() {
+        const data: Array<SearchPageWeatherData> = []
+        for (let item of this.citiesInfo) {
+            const weatherData: KVStoreCachedModel<RealWeatherResult> =
+                JSON.parse(
+                    await this.weatherKvStore!.get(constants.getRealWeatherDataKey(item.locationID)) as string
+                ) as KVStoreCachedModel<RealWeatherResult>
+            const forecastData: KVStoreCachedModel<ForecastWeatherDayResult> =
+                JSON.parse(
+                    await this.weatherKvStore!.get(constants.getForecastWeatherDayDataKey(item.locationID)) as string
+                ) as KVStoreCachedModel<ForecastWeatherDayResult>
+            data.push({
+                temp: parseInt(weatherData.data.now.temp),
+                tempMax: parseInt(forecastData.data.daily[0].tempMax),
+                tempMin: parseInt(forecastData.data.daily[0].tempMin),
+                desc: weatherData.data.now.text,
+                locationID: item.locationID
+            })
+        }
+        return data
+    }
 
     /**
      * 从本地数据库加载城市信息
@@ -45,11 +87,20 @@ struct Index {
 
         // 监听数据是否发生变化
         this.weatherKvStore!.on('dataChange', distributedKVStore.SubscribeType.SUBSCRIBE_TYPE_ALL, (data) => {
+            // 应用最开始进入时，会插入数据
+            const inserted = data.insertEntries.find((item) => {
+                return item.key === KEY_CITIES_INFO;
+            })
+            if (inserted) {
+                this.citiesInfo = JSON.parse(inserted.value.value as string)  as CityModel[]
+                return
+            }
+            // 其他使用更新的数据
             const updated = data.updateEntries.find((item) => {
-                return item.key === KEY_CITIES_INFO
+                return item.key === KEY_CITIES_INFO;
             });
             if (updated) {
-                this.citiesInfo = JSON.parse(updated.value.value as string)
+                this.citiesInfo = JSON.parse(updated.value.value as string) as CityModel[]
             }
         })
     }
@@ -92,6 +143,9 @@ struct Index {
                             buttonColor: Color.Transparent
                         }
                     })
+                        .onClick(() => {
+                            this.navigateToSearchPage()
+                        })
                 }
                 .height(56)
                 .padding({ left: 12 })

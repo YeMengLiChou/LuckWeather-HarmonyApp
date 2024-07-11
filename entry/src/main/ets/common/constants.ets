@@ -19,7 +19,7 @@ export function getRealWeatherDataKey(location: string) {
 /**
  * 当前空气质量数据KEY前缀
  * */
-const KEY_REAL_WEATHER_AIR_PREFIX = "real_weather_air_update_time_"
+const KEY_REAL_WEATHER_AIR_PREFIX = "real_weather_air_"
 
 export function getRealWeatherAirDataKey(location: string) {
     return KEY_REAL_WEATHER_AIR_PREFIX + location
@@ -28,7 +28,7 @@ export function getRealWeatherAirDataKey(location: string) {
 /**
  * 指定城市location的日预报天气的数据KEY
  * */
-const KEY_FORECAST_WEATHER_DAY_PREFIX = "forecast_weather_day_update_time_"
+const KEY_FORECAST_WEATHER_DAY_PREFIX = "forecast_weather_day_"
 
 export function getForecastWeatherDayDataKey(location: string) {
     return KEY_FORECAST_WEATHER_DAY_PREFIX + location
@@ -37,7 +37,7 @@ export function getForecastWeatherDayDataKey(location: string) {
 /**
  * 24小时天气预测数据KEY前缀
  * */
-const KEY_FORECAST_WEATHER_HOUR_PREFIX = "forecast_weather_hour_update_time_"
+const KEY_FORECAST_WEATHER_HOUR_PREFIX = "forecast_weather_hour_"
 
 /**
  * 指定城市location的小时预测数据的KEY
