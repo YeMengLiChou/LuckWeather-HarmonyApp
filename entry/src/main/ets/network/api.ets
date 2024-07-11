@@ -63,7 +63,7 @@ export function fetchForecast24HourWeather(
     location: string
 ): Promise<ForecastWeatherHourResult> {
     return request<WeatherParam, ForecastWeatherHourResult>('/v7/weather/24h', {
-        useBaseUrl:false,
+        useBaseUrl: false,
         param: {
             key: API_KEY,
             location: location
@@ -76,12 +76,12 @@ export function fetchForecast24HourWeather(
  * 根据关键字获取城市信息
  * */
 export function fetchCityInfoByKeyWord(
-  keyword:string
-):Promise<LocationResult>{
-    return request<LocationParam,LocationResult>('https://geoapi.qweather.com/v2/city/lookup',{
-        param:{
-            key:API_KEY,
-            location:keyword
+    keyword: string
+): Promise<LocationResult> {
+    return request<LocationParam, LocationResult>('https://geoapi.qweather.com/v2/city/lookup', {
+        param: {
+            key: API_KEY,
+            location: keyword
         }
     })
 }

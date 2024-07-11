@@ -16,6 +16,5 @@ export interface CityModel {
 
     /** 定位城市 */
     isLocationCity: boolean
-
-    createTimestamp:string
+    createTimestamp: string
 }

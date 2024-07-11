@@ -8,7 +8,6 @@ struct Index {
     @Provide pageStack: NavPathStack = new NavPathStack()
     @State currentIndex: number = 0
 
-
     @Builder
     tabBuilder(index: number, name: string) {
         Column() {

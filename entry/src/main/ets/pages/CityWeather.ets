@@ -8,14 +8,14 @@ export interface CityWeatherOptions {
 @Component
 export struct CityWeather {
     @Prop cityWeatherOptions: CityWeatherOptions
-
     mock: number[] = []
 
     aboutToAppear(): void {
-        for (let i = 0; i < 100; i ++) {
+        for (let i = 0; i < 100; i++) {
             this.mock.push(i)
         }
     }
+
     build() {
         Scroll() {
             Column() {
