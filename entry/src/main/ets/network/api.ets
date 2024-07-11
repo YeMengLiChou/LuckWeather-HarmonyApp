@@ -30,7 +30,7 @@ export function fetchCityByLatitudeAndLongitude(lon: number, lat: number): Promi
 /**
  * 获取到实时天气
  * */
-export function fetchRealWeather(
+export function     fetchRealWeather(
     location: string,
 ): Promise<RealWeatherResult> {
     return request<WeatherParam, RealWeatherResult>('/v7/weather/now', {

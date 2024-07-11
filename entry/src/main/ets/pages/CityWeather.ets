@@ -1,3 +1,5 @@
+ //import { RealTimeWeather } from '../components/RealTimeWeather'
+
 export interface CityWeatherOptions {
     location: string,
 }
@@ -19,6 +21,7 @@ export struct CityWeather {
     build() {
         Scroll() {
             Column() {
+                 //RealTimeWeather()
                 ForEach(this.mock, (item: number) => {
                     Text(`${item}`)
                 })

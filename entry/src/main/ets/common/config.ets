@@ -4,6 +4,6 @@ export const BUNDLE_NAME = "cn.li.luck_weather"
 
 export const STORE_ID_WEATHER = "weather"
 
-export const API_KEY = "72babb82b7b74fe980d8f8b7b8b69d16"
+export const API_KEY = "95cbfa469e3d4929b43f6e885ba8bc8b"
 
 export const DEBUG = true
