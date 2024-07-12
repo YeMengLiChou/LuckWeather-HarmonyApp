@@ -1,8 +1,15 @@
 import { CityMangerModel2, CityWeatherVO } from '../../model/CityManagerModel2'
 import { CityModel } from '../../model/CityModel'
-import { fetchRealWeather, fetchForecast7DayWeather } from '../../network/api'
+import { fetchForecast7DayWeather } from '../../network/api'
 import { ForecastWeatherDayResult, Location, RealWeatherResult } from '../../network/type'
-import { getWeatherKvStore, updateCitiesInfo } from '../../utils/WeatherKvStore'
+import {
+    fetchAndCachedForecast24HourWeather,
+    fetchAndCachedForecast7DayWeather,
+    fetchAndCachedNowAirData,
+    fetchAndCachedRealWeatherData,
+    getWeatherKvStore,
+    updateCitiesInfo
+} from '../../utils/WeatherKvStore'
 import { distributedKVStore } from '@kit.ArkData'
 import { promptAction } from '@kit.ArkUI'
 import { IconButton } from '../../components/IconButton'
@@ -54,16 +61,22 @@ export struct SearchResult {
     /**
      * 搜索结果列表
      * */
-    @Link locations: Location[]
-    @Link dataList: CityMangerModel2[]
-    @Link tureDataList: CityWeatherVO[]
-    @Link citiesInfo: CityModel[]
+    @Link
+    locations: Location[]
+    @Link
+    dataList: CityMangerModel2[]
+    @Link
+    tureDataList: CityWeatherVO[]
+    @Link
+    citiesInfo: CityModel[]
     private weatherKvStore?: distributedKVStore.DeviceKVStore
 
     private async fetchCityWeatherData(item: Location) {
         try {
-            const realData = await fetchRealWeather(item.id)
-            const forecastData = await fetchForecast7DayWeather(item.id)
+            const realData = await fetchAndCachedRealWeatherData(item.id, this.weatherKvStore!)
+            const forecastData = await fetchAndCachedForecast7DayWeather(item.id, this.weatherKvStore!)
+            fetchAndCachedNowAirData(item.id, this.weatherKvStore!)
+            fetchAndCachedForecast24HourWeather(item.id, this.weatherKvStore!)
             //更新VO数组
             this.tureDataList.push(transformToCityWeatherVO(item, realData, forecastData))
             // 更新citiesInfo数组
@@ -97,14 +110,16 @@ export struct SearchResult {
     /**
      * 跳转到7天趋势页面
      * */
-    private navigateToTrendPage(locationID: string, cityName: string) {
+    private navigateToTrendPage(locationID: string, cityName: string, location: Location) {
         fetchForecast7DayWeather(locationID)
             .then((res) => {
                 const data: DayTrendPageNavParam = {
+                    added: this.citiesInfo.find((item) => item.locationID == locationID) !== undefined,
                     locationID: locationID,
                     shouldShowNavigation: true,
                     cityName: cityName,
-                    data: res
+                    data: res,
+                    location: location
                 }
                 this.pathStack.pushDestinationByName("day_trend", data)
             })
@@ -149,15 +164,14 @@ export struct SearchResult {
                                 } else {
                                     Row({ space: 6 }) {
                                         Text("已添加")
+                                            .height(36)
                                             .font({ size: 14, weight: 300 })
                                             .fontColor(Color.Gray)
+
                                         Image($r("app.media.icon_right_arrow"))
                                             .size({ height: 20, width: 20 })
                                     }
                                     .alignItems(VerticalAlign.Center)
-                                    .onClick(() => {
-                                        this.navigateToTrendPage(item.id, item.name)
-                                    })
                                 }
                             }
                             .width('100%')
@@ -165,6 +179,9 @@ export struct SearchResult {
                             .alignItems(VerticalAlign.Center)
                         }
                         .searchCard()
+                        .onClick(() => {
+                            this.navigateToTrendPage(item.id, item.name, item)
+                        })
                     }
                 )
             }

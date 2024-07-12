@@ -5,8 +5,9 @@ import { distributedKVStore } from '@kit.ArkData'
 import { getWeatherKvStore } from '../utils/WeatherKvStore'
 import { KEY_CITIES_INFO } from '../common/constants'
 import { BusinessError } from '@kit.BasicServicesKit'
-
 import { JSON } from '@kit.ArkTS'
+
+AppStorage.setOrCreate("showLocationID", "")
 
 @Builder
 export function IndexBuilder() {
@@ -20,6 +21,9 @@ struct Index {
     private weatherKvStore?: distributedKVStore.DeviceKVStore
     @State
     private citiesInfo: Array<CityModel> = []
+    @StorageLink('showLocationID')
+    private showLocationID: string = ""
+    private controller = new TabsController()
 
     /**
      * 跳转到搜索页面
@@ -27,8 +31,6 @@ struct Index {
     private navigateToSearchPage() {
         this.pageStack.pushDestinationByName("search", null, true)
     }
-
-
 
     /**
      * 从本地数据库加载城市信息
@@ -82,6 +84,21 @@ struct Index {
             .catch((error: Error) => {
                 console.error('getWeatherKvStore failed!', JSON.stringify(error))
             })
+
+        this.pageStack.setInterception({
+            willShow: (from, to) => {
+                if (to === 'navBar') {
+                    let index: number
+                    if (this.showLocationID.length === 0) {
+                        index = this.citiesInfo.findIndex((item) => item.isLocationCity)
+                    } else {
+                        index = this.citiesInfo.findIndex((item) => item.locationID === this.showLocationID)
+                    }
+                    this.controller.changeIndex(index)
+                    // this.showLocationID
+                }
+            }
+        })
     }
 
     aboutToDisappear(): void {
@@ -98,7 +115,6 @@ struct Index {
                 .id(index.toString())
         }.width('100%')
     }
-
 
     build() {
         Navigation(this.pageStack) {
@@ -129,6 +145,7 @@ struct Index {
                 // 主体内容区域
                 Tabs({
                     barPosition: BarPosition.Start,
+                    controller: this.controller
                 }) {
                     ForEach(this.citiesInfo, (item: CityModel, index: number) => {
                         TabContent() {
@@ -152,13 +169,6 @@ struct Index {
         .hideTitleBar(true)
         .height('100%')
         .width('100%')
-        .onAppear(() => {
-            console.log('index page show')
-            // TODO: 获取要跳转的位置
-        })
-        .onDisAppear(() => {
-            console.log('index page hided')
-        })
     }
 }
 

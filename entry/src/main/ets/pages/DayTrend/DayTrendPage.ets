@@ -1,6 +1,8 @@
 import { IconButton } from '../../components/IconButton'
-import { ForecastWeatherDayResult } from '../../network/type'
+import { ForecastWeatherDayResult, Location, LocationResult } from '../../network/type'
+import { getCitiesInfo, getWeatherKvStore, updateCitiesInfo } from '../../utils/WeatherKvStore'
 import { DayTrend } from './DayTrend'
+import { distributedKVStore } from '@kit.ArkData'
 
 export interface WeatherTrendVO {
     date: number,
@@ -62,8 +64,10 @@ export function DayTrendPageBuilder() {
 export interface DayTrendPageNavParam {
     locationID: string,
     shouldShowNavigation: boolean,
+    added: boolean
     cityName: string,
     data: ForecastWeatherDayResult,
+    location?: Location
 }
 
 @Component
@@ -75,54 +79,90 @@ struct DayTrendPage {
     private data: Array<WeatherTrendVO> = []
     @State
     private param: Optional<DayTrendPageNavParam> = undefined
+    private store?: distributedKVStore.DeviceKVStore
 
     /** 从 NavPathStack 获取展示数据 */
     private getParamFromPathStack() {
         this.param = this.pageStack.getParamByName("day_trend")[0] as DayTrendPageNavParam
-        console.log('DayTrendPage navigation param', )
+        console.log('DayTrendPage navigation param',)
         this.data = transformWeatherTrendVO(this.param.data)
+    }
+
+    private navigateToMainPage() {
+        AppStorage.setOrCreate("showLocationID", this.param!.locationID)
+        this.pageStack.clear(true)
+    }
+
+    private addToCitiesInfo() {
+        getCitiesInfo(this.store!)
+            .then((info) => {
+                info.push({
+                    locationID: this.param!.location!.id,
+                    longitude: parseFloat(this.param!.location!.lon),
+                    latitude: parseFloat(this.param!.location!.lat),
+                    cityName: this.param!.location!.name,
+                    createTimestamp: Date.now(),
+                    provinceName: this.param!.location!.adm1,
+                    isLocationCity: false,
+                })
+                updateCitiesInfo(this.store!, info)
+                this.param!.added = true
+            })
+    }
+
+    aboutToAppear(): void {
+        getWeatherKvStore(getContext(this))
+            .then((store) => {
+                this.store = store
+
+            })
     }
 
     build() {
         NavDestination() {
             Column() {
-                Row() {
-                    Text(`${this.param?.cityName ?? ''}7天趋势预报`)
-                        .font({
-                            size: 30
-                        })
-                        .width('100%')
-                        .padding(20)
-
-                    if (this.param?.shouldShowNavigation) {
-                        Row() {
-                            Text("去主页查看")
-                            IconButton({
-                                options: {
-                                    iconRes: $r('app.media.icon_right_arrow'),
-                                    buttonSize: { height: 48, width: 48 },
-                                    iconSize: { height: 36, width: 36 },
-                                    buttonColor: '#e0e0e0',
-                                }
-                            })
-                        }
-                        .alignItems(VerticalAlign.Center)
-                        .onClick(() => {
-
-                        })
-                    }
-                }
-                .width('100%')
-                .justifyContent(FlexAlign.SpaceBetween)
-                .alignItems(VerticalAlign.Center)
-
                 DayTrend({
                     options: {
                         data: this.data
                     }
-                })
+                }).height("80%")
+
+
+                Column({ space: 8 }) {
+                    if (!this.param?.added) {
+                        IconButton({
+                            options: {
+                                buttonSize: { height: 48, width: 48 },
+                                iconSize: { height: 36, width: 36 },
+                                iconRes: $r('app.media.icon_add'),
+                                iconColor: Color.White
+                            }
+                        }).onClick(() => {
+                            this.addToCitiesInfo()
+                        })
+                        Text("添加到主页")
+                    } else if (this.param?.shouldShowNavigation) {
+                        IconButton({
+                            options: {
+                                buttonSize: { height: 48, width: 48 },
+                                iconRes: $r('app.media.icon_right_arrow'),
+                                iconSize: { height: 36, width: 36 },
+                                iconColor: Color.White
+                            }
+                        }).onClick(() => {
+                            this.navigateToMainPage()
+                        })
+                        Text("去主页查看")
+                    }
+
+                }
+                .alignItems(HorizontalAlign.Center)
+                .justifyContent(FlexAlign.Center)
+                .opacity(0.8)
+
             }
         }
+        .title(`${this.param?.cityName ?? ''}7天趋势预报`)
         .height('100%')
         .width('100%')
         .onReady((context) => {

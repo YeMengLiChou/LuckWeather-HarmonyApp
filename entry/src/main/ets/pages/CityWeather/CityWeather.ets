@@ -74,23 +74,35 @@ export struct CityWeather {
     private refreshingCounter: number = 0
     @State
     private refreshingText: string = '刷新中...'
+
     private kvStore?: distributedKVStore.DeviceKVStore = undefined
     /** 实时天气数据 */
     @State
+    @Watch('updateRealTemperatureVOData')
     private realWeatherData?: RealWeatherResult = undefined
     /** 7天预测数据 */
     @State
+    @Watch('updateRealTemperatureVOData')
     private forecastDayWeatherData?: ForecastWeatherDayResult = undefined
     /** 24小时预测数据 */
     @State
     private forecastHourWeatherData?: ForecastWeatherHourResult = undefined
     /** 空气数据 */
     @State
+    @Watch('updateRealTemperatureVOData')
     private airQualityData?: NowAirResult = undefined
     /** 实时天气数据VO */
     @State
     private realTemperatureVOData?: RealTemperatureVO = undefined
 
+
+    private updateRealTemperatureVOData(pro: string) {
+        if (pro === 'realWeatherData' || pro === 'forecastDayWeatherData' || pro === 'airQualityData') {
+            if (this.realWeatherData && this.forecastDayWeatherData && this.airQualityData) {
+                this.realTemperatureVOData = transformRealTemperatureVO(this.realWeatherData, this.airQualityData, this.forecastDayWeatherData)
+            }
+        }
+    }
     /**
      * 开始刷新操作
      * */
@@ -138,6 +150,8 @@ export struct CityWeather {
     }
 
     private fetchAndCachedRealAirData() {
+        console.log('fetchAndCachedRealAirData kv store', this.kvStore)
+
         this.startRefreshing()
         fetchAndCachedNowAirData(this.options!.location, this.kvStore!)
             .then((res) => {
@@ -297,6 +311,7 @@ export struct CityWeather {
     private navigateToTrendPage() {
         const data: DayTrendPageNavParam = {
             shouldShowNavigation: false,
+            added: true,
             locationID: this.options.location,
             cityName: '',
             data: this.forecastDayWeatherData!
@@ -305,12 +320,10 @@ export struct CityWeather {
     }
 
     aboutToAppear(): void {
-        this.refreshing = true
         // 获取本地数据库
         getWeatherKvStore(getContext(this))
             .then((store) => {
                 this.kvStore = store
-                console.log('CityWeather getWeatherKvStore', this.kvStore)
                 this.loadDataFromKvStore()
             })
     }

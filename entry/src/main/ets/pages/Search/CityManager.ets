@@ -17,7 +17,8 @@ export struct CityManager {
     weatherKvStore?: distributedKVStore.DeviceKVStore
 
     private navigateToSpecifiedIndex(locationID: string) {
-        const result = this.pathStack.popToIndex(0, locationID, true)
+        AppStorage.setOrCreate("showLocationID", locationID)
+        this.pathStack.clear(true)
     }
 
     private deleteCity(locationID: string) {
@@ -107,6 +108,7 @@ export struct CityManager {
             .width('100%')
             .height('100%')
             .alignListItem(ListItemAlign.Center)
+            .scrollBar(BarState.Off)
 
         }
         .margin({ top: 20 })
