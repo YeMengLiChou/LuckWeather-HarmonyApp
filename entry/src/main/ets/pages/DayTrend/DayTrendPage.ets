@@ -79,6 +79,7 @@ struct DayTrendPage {
     /** 从 NavPathStack 获取展示数据 */
     private getParamFromPathStack() {
         this.param = this.pageStack.getParamByName("day_trend")[0] as DayTrendPageNavParam
+        console.log('DayTrendPage navigation param', )
         this.data = transformWeatherTrendVO(this.param.data)
     }
 

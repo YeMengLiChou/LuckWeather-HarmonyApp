@@ -1,5 +1,4 @@
 import log from '../../common/log'
-import { fetchForecast24HourWeather, fetchForecast7DayWeather, fetchNowAir, fetchRealWeather } from '../../network/api'
 import { promptAction } from '@kit.ArkUI'
 import {
     ForecastWeatherDayResult,
@@ -8,14 +7,21 @@ import {
     RealWeatherResult
 } from '../../network/type'
 import { distributedKVStore } from '@kit.ArkData'
-import { getWeatherKvStore } from '../../utils/WeatherKvStore'
+import {
+    checkDataValidate,
+    fetchAndCachedForecast24HourWeather,
+    fetchAndCachedForecast7DayWeather,
+    fetchAndCachedNowAirData,
+    fetchAndCachedRealWeatherData,
+    getWeatherKvStore
+} from '../../utils/WeatherKvStore'
 import * as constants from '../../common/constants'
 import { RealTemperature } from './RealTemperature'
-import { KVStoreCachedModel } from '../../model/KVStoreCachedModel'
 import { Fetch3dayWeather } from './Fetch3dayWeather'
 import { DayTrendPageNavParam } from '../DayTrend/DayTrendPage'
 import { Forecast24HourWetherComponent } from './Forecast24Hour/Forecast24HourWeather'
 import { RealTimeWeather } from './RealTimeWeather'
+import { BusinessError } from '@kit.BasicServicesKit'
 
 export interface CityWeatherOptions {
     location: string,
@@ -50,37 +56,6 @@ function transformRealTemperatureVO(
 }
 
 
-/***
- * 检查数据是否已经过期
- * */
-async function checkDataValidate<T>(
-    store: distributedKVStore.DeviceKVStore,
-    key: string,
-    validateTime: number
-): Promise<Optional<T>> {
-    try {
-        const model = JSON.parse(await store.get(key) as string) as KVStoreCachedModel<T>
-        if ((Date.now() - model.cachedTime) < validateTime) {
-            return model.data
-        }
-        return undefined
-    } catch (err) {
-        return undefined
-    }
-}
-
-/***
- * 将数据缓存到数据库中
- * */
-async function cacheDataTo<T>(store: distributedKVStore.DeviceKVStore, key: string, data: T) {
-    const cachedModel: KVStoreCachedModel<T> = {
-        cachedTime: Date.now(),
-        data: data
-    }
-    await store.put(key, JSON.stringify(cachedModel))
-}
-
-
 /**
  * 城市天气的主要组件
  * 主要逻辑：
@@ -97,6 +72,8 @@ export struct CityWeather {
     /** 当前刷新完成数 */
     @State
     private refreshingCounter: number = 0
+    @State
+    private refreshingText: string = '刷新中...'
     private kvStore?: distributedKVStore.DeviceKVStore = undefined
     /** 实时天气数据 */
     @State
@@ -120,6 +97,7 @@ export struct CityWeather {
     private startRefreshing() {
         this.refreshing = true
         this.refreshingCounter++
+        this.refreshingText = "刷新中..."
     }
 
     /**
@@ -128,7 +106,10 @@ export struct CityWeather {
     private completedRefreshing() {
         this.refreshingCounter--;
         if (this.refreshingCounter === 0) {
-            this.refreshing = false
+            this.refreshingText = "刷新成功！"
+            setTimeout(() => {
+                this.refreshing = false
+            }, 500)
         }
     }
 
@@ -138,20 +119,13 @@ export struct CityWeather {
     private async fetchAndCachedRealWeatherData() {
         this.startRefreshing()
         try {
-            const realWeatherData = await fetchRealWeather(this.options.location)
-            const airData = await fetchNowAir(this.options.location)
-            const forecastData = await fetchForecast7DayWeather(this.options.location)
+            this.realWeatherData = await fetchAndCachedRealWeatherData(this.options.location, this.kvStore!)
+            this.airQualityData = await fetchAndCachedNowAirData(this.options.location, this.kvStore!)
+            this.forecastDayWeatherData = await fetchAndCachedForecast7DayWeather(this.options.location, this.kvStore!)
 
             // 更新状态变量
-            this.realTemperatureVOData = transformRealTemperatureVO(realWeatherData, airData, forecastData)
-            this.realWeatherData = realWeatherData
-            this.airQualityData = airData
-            this.forecastDayWeatherData = forecastData
-
-            // 缓存到数据库
-            cacheDataTo(this.kvStore!, constants.getRealWeatherDataKey(this.options.location), realWeatherData)
-            cacheDataTo(this.kvStore!, constants.getRealWeatherAirDataKey(this.options.location), airData)
-            cacheDataTo(this.kvStore!, constants.getForecastWeatherDayDataKey(this.options.location), forecastData)
+            this.realTemperatureVOData =
+                transformRealTemperatureVO(this.realWeatherData, this.airQualityData, this.forecastDayWeatherData)
 
         } catch (error) {
             promptAction.showToast({
@@ -165,10 +139,9 @@ export struct CityWeather {
 
     private fetchAndCachedRealAirData() {
         this.startRefreshing()
-        fetchNowAir(this.options!.location)
+        fetchAndCachedNowAirData(this.options!.location, this.kvStore!)
             .then((res) => {
                 this.airQualityData = res
-                cacheDataTo(this.kvStore!, constants.getRealWeatherAirDataKey(this.options.location), res)
             })
             .catch((err: Error) => {
                 log.error('fetchAndCachedAirData Failed!', JSON.stringify(err))
@@ -186,13 +159,12 @@ export struct CityWeather {
      * */
     private fetchAndCachedForecastDayWeatherData() {
         this.startRefreshing()
-        fetchForecast7DayWeather(this.options!.location)
+        fetchAndCachedForecast7DayWeather(this.options!.location, this.kvStore!)
             .then((res) => {
                 this.forecastDayWeatherData = res
-                cacheDataTo(this.kvStore!, constants.getForecastWeatherDayDataKey(this.options.location), res)
             })
             .catch((err: Error) => {
-                log.error("fetchForecastWeatherDayData", err)
+                log.error("fetchForecastWeatherDayData failed", err)
                 promptAction.showToast({
                     message: '获取数据失败，请检查网络！'
                 })
@@ -207,13 +179,13 @@ export struct CityWeather {
      * */
     private fetchAndCachedForecastHourWeatherData() {
         this.startRefreshing()
-        fetchForecast24HourWeather(this.options!.location)
+        console.log('fetchForecastHourWeatherData kv store', this.kvStore)
+        fetchAndCachedForecast24HourWeather(this.options!.location, this.kvStore!)
             .then((res) => {
                 this.forecastHourWeatherData = res
-                cacheDataTo(this.kvStore!, constants.getForecastWeatherHourDataKey(this.options.location), res)
             })
             .catch((err: Error) => {
-                log.error("fetchForecastHourWeatherData", err)
+                log.error("fetchForecastHourWeatherData failed", err)
                 promptAction.showToast({
                     message: '获取数据失败，请检查网络！'
                 })
@@ -240,11 +212,15 @@ export struct CityWeather {
             5 * 60 * 1000,
         )
             .then((res) => {
+                console.log(`checkDataValidate<RealWeatherResult> need refresh: ${res === undefined}`)
                 if (res) {
                     this.realWeatherData = res
                 } else {
                     this.fetchAndCachedRealWeatherData()
                 }
+            })
+            .catch((err: BusinessError) => {
+                console.error(`checkDataValidate<RealWeatherResult> failed: (${err.code}) ${err.message}`)
             })
             .finally(() => {
                 this.completedRefreshing()
@@ -258,11 +234,15 @@ export struct CityWeather {
             5 * 60 * 1000,
         )
             .then((res) => {
+                console.log(`checkDataValidate<NowAirResult> need refresh: ${res === undefined}`)
                 if (res) {
                     this.airQualityData = res
                 } else {
                     this.fetchAndCachedRealAirData()
                 }
+            })
+            .catch((err: BusinessError) => {
+                console.error(`checkDataValidate<NowAirResult> failed: (${err.code}) ${err.message}`)
             })
             .finally(() => {
                 this.completedRefreshing()
@@ -272,15 +252,21 @@ export struct CityWeather {
         this.startRefreshing()
         checkDataValidate<ForecastWeatherDayResult>(
             this.kvStore!,
-            constants.getRealWeatherAirDataKey(this.options.location),
+            constants.getForecastWeatherDayDataKey(this.options.location),
             10 * 60 * 1000,
         )
             .then((res) => {
+
+                console.log(`checkDataValidate<ForecastWeatherDayResult> need refresh: ${res === undefined}`)
                 if (res) {
                     this.forecastDayWeatherData = res
                 } else {
                     this.fetchAndCachedForecastDayWeatherData()
                 }
+            })
+
+            .catch((err: BusinessError) => {
+                console.error(`checkDataValidate<ForecastWeatherDayResult> failed: (${err.code}) ${err.message}`)
             })
             .finally(() => {
                 this.completedRefreshing()
@@ -293,11 +279,15 @@ export struct CityWeather {
             10 * 60 * 1000,
         )
             .then((res) => {
+                console.log(`checkDataValidate<ForecastWeatherHourResult> need refresh: ${res === undefined}`)
                 if (res) {
                     this.forecastHourWeatherData = res
                 } else {
                     this.fetchAndCachedForecastHourWeatherData()
                 }
+            })
+            .catch((err: BusinessError) => {
+                console.error(`checkDataValidate<ForecastWeatherHourResult> failed: (${err.code}) ${err.message}`)
             })
             .finally(() => {
                 this.completedRefreshing()
@@ -311,7 +301,7 @@ export struct CityWeather {
             cityName: '',
             data: this.forecastDayWeatherData!
         }
-        this.pathStack.pushPathByName("day_trend", data, true)
+        this.pathStack.pushDestinationByName("day_trend", data, true)
     }
 
     aboutToAppear(): void {
@@ -320,15 +310,16 @@ export struct CityWeather {
         getWeatherKvStore(getContext(this))
             .then((store) => {
                 this.kvStore = store
+                console.log('CityWeather getWeatherKvStore', this.kvStore)
                 this.loadDataFromKvStore()
             })
     }
 
     build() {
-        Refresh({ refreshing: $$this.refreshing, promptText: '刷新中' }) {
+        Refresh({ refreshing: $$this.refreshing, promptText: this.refreshingText }) {
             Scroll() {
 
-                Column({space: 24}) {
+                Column({ space: 24 }) {
                     if (this.realTemperatureVOData) {
                         Column({ space: 24 }) {
                             RealTemperature({
@@ -378,7 +369,7 @@ export struct CityWeather {
                     }
                 }
                 .width("100%")
-                .padding({left: 16, right: 16})
+                .padding({ left: 16, right: 16 })
             }
             .height('100%')
             .width('100%')

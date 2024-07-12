@@ -17,8 +17,7 @@ export struct CityManager {
     weatherKvStore?: distributedKVStore.DeviceKVStore
 
     private navigateToSpecifiedIndex(locationID: string) {
-        // TODO: navigate to main page
-        this.pathStack.popToName("main", locationID, true)
+        const result = this.pathStack.popToIndex(0, locationID, true)
     }
 
     private deleteCity(locationID: string) {
@@ -34,20 +33,24 @@ export struct CityManager {
     }
 
     @Builder
-    deleteButton(locationID: string) {
-        Button() {
-            Image($r('app.media.icon_delete'))
-                .fillColor(Color.White)
-                .width(20)
+    deleteButton(locationID: string, isLocationCity: boolean) {
+        if (!isLocationCity) {
+            Button() {
+                Image($r('app.media.icon_delete'))
+                    .fillColor(Color.White)
+                    .width(20)
+            }
+            .margin({ left: 10, right: 10 })
+            .width(40)
+            .height(40)
+            .type(ButtonType.Circle)
+            .role(ButtonRole.ERROR)
+            .onClick(() => {
+                this.deleteCity(locationID)
+            })
+        } else {
+            Blank()
         }
-        .margin({ left: 10, right: 10 })
-        .width(40)
-        .height(40)
-        .type(ButtonType.Circle)
-        .role(ButtonRole.ERROR)
-        .onClick(() => {
-            this.deleteCity(locationID)
-        })
     }
 
     aboutToAppear(): void {
@@ -94,7 +97,7 @@ export struct CityManager {
                             .cityCard()
                             .justifyContent(FlexAlign.SpaceBetween)
                         }
-                        .swipeAction({ end: this.deleteButton(item.city.locationID) })
+                        .swipeAction({ end: this.deleteButton(item.city.locationID, item.city.isLocationCity) })
                         .onClick(() => {
                             this.navigateToSpecifiedIndex(item.city.locationID)
                         })

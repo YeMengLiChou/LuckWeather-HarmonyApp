@@ -77,7 +77,7 @@ export struct SunRiseAndSet {
     private context: CanvasRenderingContext2D = new CanvasRenderingContext2D(new RenderingContextSettings(true))
     private readonly lineWidth = 1.2
     private readonly lineColor = Color.Gray
-    private readonly baselineColor = "#e0e0e0"
+    private readonly baselineColor = "#80000000"
 
     private calTimeRatio(start: string, end: string) {
         const startDate = parseTimeString(start)

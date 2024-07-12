@@ -12,7 +12,7 @@ export interface ForecastHourItemOptions {
 function getHourText(time: number | string, index: number) {
     const date = new Date(time)
     const now = new Date()
-    if (now.getHours() == date.getHours() || index == 0) {
+    if (now.getHours() == date.getHours()&& now.getDate() == date.getTime() || index == 0) {
         return '现在'
     } else if (date.getHours() == 0) {
         return `${date.getMonth() + 1}月${date.getDate()}日`
@@ -86,7 +86,7 @@ export struct ForecastHourItem {
 
 
         if (!this.options!.rightTemp) {
-            this.options!.leftTemp = curTemp
+            this.options!.rightTemp = curTemp
         }
         // 右侧有点，绘制线
         const rightRatio = this.calRatio(this.options!.rightTemp!)

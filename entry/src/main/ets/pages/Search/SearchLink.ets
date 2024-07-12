@@ -12,11 +12,16 @@ import { CityManager } from './CityManager'
 export struct SearchLink {
     result?: LocationResult
     @State locations: Location[] = []
-    @State isShow: boolean = false
-    @Link dataList: CityMangerModel2[]
-    @Link tureDataList: CityWeatherVO[]
+    @State
+    isShow: boolean = false
+    @Link
+    dataList: CityMangerModel2[]
+    @Link
+    tureDataList: CityWeatherVO[]
     @Link citiesInfo: CityModel[]
     private searchDebounceId = -1
+
+
 
     /**
      * 搜索结果变化触发api搜索

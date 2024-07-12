@@ -1,4 +1,3 @@
-import { KEY_CITIES_INFO } from '../../common/constants'
 import { CityMangerModel2, CityWeatherVO } from '../../model/CityManagerModel2'
 import { CityModel } from '../../model/CityModel'
 import { fetchRealWeather, fetchForecast7DayWeather } from '../../network/api'
